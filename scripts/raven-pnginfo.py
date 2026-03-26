@@ -149,6 +149,7 @@ def on_image_saved(params: script_callbacks.ImageSaveParams):
         positive_tags = prompt_to_tags(params.p.prompt)
         negative_tags = prompt_to_tags(params.p.negative_prompt)
         generation_params = collect_generation_params(params.p)
+        annotation = params.pnginfo.get("parameters", "")
 
         # Raven に送信
         client = RavenClient(shared.opts.raven_server_url)
@@ -158,6 +159,7 @@ def on_image_saved(params: script_callbacks.ImageSaveParams):
             positive_tags=positive_tags,
             negative_tags=negative_tags,
             generation_params=generation_params,
+            annotation=annotation,
         )
     except Exception as e:
         print(f"[Raven] Failed to send image: {e}")

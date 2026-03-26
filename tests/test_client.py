@@ -76,6 +76,24 @@ class TestRavenClientIngest:
         assert payload["generationParams"] == {"Steps": "20"}
 
     @patch("ravenapi.client.requests")
+    def test_ingest_annotationがペイロードに含まれること(self, mock_requests):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 201
+        mock_resp.json.return_value = {"id": 1, "externalId": "uuid"}
+        mock_requests.post.return_value = mock_resp
+
+        client = RavenClient("http://localhost:3000")
+        client.ingest(
+            file_path="/path/to/image.png",
+            name="test-001",
+            annotation="1girl, solo\nSteps: 20, Sampler: Euler a",
+        )
+
+        call_args = mock_requests.post.call_args
+        payload = call_args.kwargs.get("json") or call_args[1].get("json")
+        assert payload["annotation"] == "1girl, solo\nSteps: 20, Sampler: Euler a"
+
+    @patch("ravenapi.client.requests")
     def test_ingest_オプション省略時はペイロードに含まれないこと(self, mock_requests):
         mock_resp = MagicMock()
         mock_resp.status_code = 201
@@ -90,6 +108,7 @@ class TestRavenClientIngest:
         assert "positiveTags" not in payload
         assert "negativeTags" not in payload
         assert "generationParams" not in payload
+        assert "annotation" not in payload
 
     @patch("ravenapi.client.requests")
     def test_ingest_URL末尾のスラッシュが除去されること(self, mock_requests):

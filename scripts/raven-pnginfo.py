@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 
 from modules import paths, script_callbacks, shared
@@ -124,6 +125,16 @@ def collect_generation_params(p) -> dict[str, str]:
     return params
 
 
+def to_wsl_path(win_path: str) -> str:
+    """Windows パスを WSL パスに変換する。非 Windows パスはそのまま返す。"""
+    m = re.match(r"^([A-Za-z]):[\\\/]", win_path)
+    if not m:
+        return win_path
+    drive = m.group(1).lower()
+    rest = win_path[3:].replace("\\", "/")
+    return f"/mnt/{drive}/{rest}"
+
+
 def on_image_saved(params: script_callbacks.ImageSaveParams):
     """画像保存時のコールバック"""
     if not shared.opts.enable_raven_integration:
@@ -131,7 +142,7 @@ def on_image_saved(params: script_callbacks.ImageSaveParams):
 
     try:
         # ファイル情報
-        full_path = os.path.join(path_root, params.filename)
+        full_path = to_wsl_path(os.path.join(path_root, params.filename))
         filename = os.path.splitext(os.path.basename(full_path))[0]
 
         # メタデータ収集

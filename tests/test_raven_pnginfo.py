@@ -57,6 +57,23 @@ class TestPromptToTags:
         assert result == ["1girl", "solo"]
 
 
+class TestToWslPath:
+    def test_Windowsパスを変換(self):
+        assert raven_pnginfo.to_wsl_path(r"D:\Apps\outputs\image.png") == "/mnt/d/Apps/outputs/image.png"
+
+    def test_大文字ドライブレターを小文字に変換(self):
+        assert raven_pnginfo.to_wsl_path(r"C:\Users\test.png") == "/mnt/c/Users/test.png"
+
+    def test_スラッシュ区切りのWindowsパス(self):
+        assert raven_pnginfo.to_wsl_path("D:/Apps/outputs/image.png") == "/mnt/d/Apps/outputs/image.png"
+
+    def test_Linuxパスはそのまま(self):
+        assert raven_pnginfo.to_wsl_path("/home/user/image.png") == "/home/user/image.png"
+
+    def test_相対パスはそのまま(self):
+        assert raven_pnginfo.to_wsl_path("outputs/image.png") == "outputs/image.png"
+
+
 class MockProcessing:
     def __init__(self, **kwargs):
         self.steps = kwargs.get("steps", 20)

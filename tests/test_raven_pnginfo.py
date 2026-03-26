@@ -174,6 +174,7 @@ class TestOnImageSaved:
         )
         mock_params.p.prompt = "1girl, solo"
         mock_params.p.negative_prompt = "low quality"
+        mock_params.pnginfo = {"parameters": "1girl, solo\nSteps: 20, Sampler: Euler a"}
 
         mock_client = MagicMock()
         with patch.object(raven_pnginfo, "RavenClient", return_value=mock_client) as MockClient:
@@ -184,6 +185,7 @@ class TestOnImageSaved:
             call_kwargs = mock_client.ingest.call_args.kwargs
             assert call_kwargs["name"] == "00001-123"
             assert "1girl" in call_kwargs["positive_tags"]
+            assert call_kwargs["annotation"] == "1girl, solo\nSteps: 20, Sampler: Euler a"
 
     def test_無効時に送信されないこと(self):
         mock_shared.opts.enable_raven_integration = False

@@ -22,6 +22,7 @@ class RavenClient:
         positive_tags: list[str] | None = None,
         negative_tags: list[str] | None = None,
         generation_params: dict[str, str] | None = None,
+        annotation: str | None = None,
     ) -> dict:
         """画像を Raven に送信"""
         payload = {
@@ -34,6 +35,8 @@ class RavenClient:
             payload["negativeTags"] = negative_tags
         if generation_params:
             payload["generationParams"] = generation_params
+        if annotation:
+            payload["annotation"] = annotation
 
         resp = requests.post(
             f"{self.server_url}/api/ingest",

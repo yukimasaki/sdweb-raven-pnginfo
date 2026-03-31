@@ -159,6 +159,7 @@ class TestOnImageSaved:
     def test_有効時に送信されること(self):
         mock_shared.opts.enable_raven_integration = True
         mock_shared.opts.raven_server_url = "http://localhost:3000"
+        mock_shared.opts.raven_api_token = "test-token"
         mock_shared.opts.sd_model_checkpoint = "animagine-xl-3.1"
         mock_shared.opts.CLIP_stop_at_last_layers = 1
 
@@ -180,12 +181,32 @@ class TestOnImageSaved:
         with patch.object(raven_pnginfo, "RavenClient", return_value=mock_client) as MockClient:
             raven_pnginfo.on_image_saved(mock_params)
 
-            MockClient.assert_called_once_with("http://localhost:3000")
+            MockClient.assert_called_once_with("http://localhost:3000", api_token="test-token")
             mock_client.ingest.assert_called_once()
             call_kwargs = mock_client.ingest.call_args.kwargs
             assert call_kwargs["name"] == "00001-123"
             assert "1girl" in call_kwargs["positive_tags"]
             assert call_kwargs["annotation"] == "1girl, solo\nSteps: 20, Sampler: Euler a"
+
+    def test_トークン空文字時はNoneが渡されること(self):
+        mock_shared.opts.enable_raven_integration = True
+        mock_shared.opts.raven_server_url = "http://localhost:3000"
+        mock_shared.opts.raven_api_token = ""
+        mock_shared.opts.sd_model_checkpoint = "animagine-xl-3.1"
+        mock_shared.opts.CLIP_stop_at_last_layers = 1
+
+        mock_params = MagicMock()
+        mock_params.filename = "outputs/txt2img/00001-123.png"
+        mock_params.p = MockProcessing()
+        mock_params.p.prompt = "1girl"
+        mock_params.p.negative_prompt = ""
+        mock_params.pnginfo = {"parameters": "1girl"}
+
+        mock_client = MagicMock()
+        with patch.object(raven_pnginfo, "RavenClient", return_value=mock_client) as MockClient:
+            raven_pnginfo.on_image_saved(mock_params)
+
+            MockClient.assert_called_once_with("http://localhost:3000", api_token=None)
 
     def test_無効時に送信されないこと(self):
         mock_shared.opts.enable_raven_integration = False

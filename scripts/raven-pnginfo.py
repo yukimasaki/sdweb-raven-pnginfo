@@ -36,6 +36,14 @@ def on_ui_settings():
             section=section,
         ),
     )
+    shared.opts.add_option(
+        "raven_api_token",
+        shared.OptionInfo(
+            "",
+            "Raven API token (Authorization: Bearer)",
+            section=section,
+        ),
+    )
 
 
 def prompt_to_tags(prompt: str) -> list[str]:
@@ -152,7 +160,8 @@ def on_image_saved(params: script_callbacks.ImageSaveParams):
         annotation = params.pnginfo.get("parameters", "")
 
         # Raven に送信
-        client = RavenClient(shared.opts.raven_server_url)
+        api_token = getattr(shared.opts, "raven_api_token", "") or None
+        client = RavenClient(shared.opts.raven_server_url, api_token=api_token)
         client.ingest(
             file_path=full_path,
             name=filename,

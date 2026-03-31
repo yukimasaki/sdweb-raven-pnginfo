@@ -4,13 +4,20 @@ TIMEOUT = 10  # seconds
 
 
 class RavenClient:
-    def __init__(self, server_url: str):
+    def __init__(self, server_url: str, api_token: str | None = None):
         self.server_url = server_url.rstrip("/")
+        self._headers: dict[str, str] = {}
+        if api_token:
+            self._headers["Authorization"] = f"Bearer {api_token}"
 
     def health(self) -> bool:
         """Raven サーバーの起動状態を確認"""
         try:
-            resp = requests.get(f"{self.server_url}/api/health", timeout=TIMEOUT)
+            resp = requests.get(
+                f"{self.server_url}/api/health",
+                headers=self._headers,
+                timeout=TIMEOUT,
+            )
             return resp.status_code == 200
         except requests.RequestException:
             return False
@@ -41,6 +48,7 @@ class RavenClient:
         resp = requests.post(
             f"{self.server_url}/api/ingest",
             json=payload,
+            headers=self._headers,
             timeout=TIMEOUT,
         )
 

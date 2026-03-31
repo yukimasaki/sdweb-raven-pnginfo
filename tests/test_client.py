@@ -125,6 +125,49 @@ class TestRavenClientIngest:
         assert url == "http://localhost:3000/api/ingest"
 
 
+class TestRavenClientAuthHeader:
+    @patch("ravenapi.client.requests")
+    def test_ingest_Authorizationヘッダーが送信されること(self, mock_requests):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 201
+        mock_resp.json.return_value = {"id": 1, "externalId": "uuid"}
+        mock_requests.post.return_value = mock_resp
+
+        client = RavenClient("http://localhost:3000", api_token="my-token")
+        client.ingest(file_path="/path/to/image.png", name="test")
+
+        call_args = mock_requests.post.call_args
+        headers = call_args.kwargs.get("headers") or call_args[1].get("headers")
+        assert headers["Authorization"] == "Bearer my-token"
+
+    @patch("ravenapi.client.requests")
+    def test_health_Authorizationヘッダーが送信されること(self, mock_requests):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_requests.get.return_value = mock_resp
+
+        client = RavenClient("http://localhost:3000", api_token="my-token")
+        client.health()
+
+        call_args = mock_requests.get.call_args
+        headers = call_args.kwargs.get("headers") or call_args[1].get("headers")
+        assert headers["Authorization"] == "Bearer my-token"
+
+    @patch("ravenapi.client.requests")
+    def test_トークン未指定時はAuthorizationヘッダーなしで送信されること(self, mock_requests):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 201
+        mock_resp.json.return_value = {"id": 1, "externalId": "uuid"}
+        mock_requests.post.return_value = mock_resp
+
+        client = RavenClient("http://localhost:3000")
+        client.ingest(file_path="/path/to/image.png", name="test")
+
+        call_args = mock_requests.post.call_args
+        headers = call_args.kwargs.get("headers") or call_args[1].get("headers")
+        assert "Authorization" not in headers
+
+
 class TestRavenClientHealth:
     @patch("ravenapi.client.requests")
     def test_health_200_成功(self, mock_requests):
